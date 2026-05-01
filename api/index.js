@@ -4,20 +4,34 @@ const app = express();
 app.use(express.json());
 
 const SECRET = process.env.TICKET_SECRET || '';
+const WIFI_URL = process.env.WIFI_URL || '';
 
 function generateCode() {
   var buf = crypto.randomBytes(8);
   var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
   var digits = '23456789';
-  var a = chars[buf[0] % chars.length];
-  var b = chars[buf[1] % chars.length];
-  var c = chars[buf[2] % chars.length];
-  var d = digits[buf[3] % digits.length];
-  var e = digits[buf[4] % digits.length];
-  var f = digits[buf[5] % digits.length];
-  var g = chars[buf[6] % chars.length];
-  var h = chars[buf[7] % chars.length];
-  return 'WF-' + a + b + c + '-' + d + e + f + '-' + g + h;
+  return 'WF-'
+    + chars[buf[0] % chars.length]
+    + chars[buf[1] % chars.length]
+    + chars[buf[2] % chars.length]
+    + '-'
+    + digits[buf[3] % digits.length]
+    + digits[buf[4] % digits.length]
+    + digits[buf[5] % digits.length]
+    + '-'
+    + chars[buf[6] % chars.length]
+    + chars[buf[7] % chars.length];
+}
+
+function relay(code) {
+  if (!WIFI_URL) return;
+  var expiresAt = new Date(Date.now() + 86400000).toISOString();
+  fetch(WIFI_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code: code, expires_at: expiresAt }),
+    signal: AbortSignal.timeout(8000),
+  }).catch(function() {});
 }
 
 function buildPage(secret) {
@@ -43,7 +57,6 @@ html,body{min-height:100%;background:#080808;color:#fff;font-family:'Courier New
 #history{width:100%;max-width:480px;display:flex;flex-direction:column;gap:.6rem}
 .entry{background:#111;border-radius:4px;padding:.75rem 1rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;cursor:pointer}
 .entry-code{font-size:1.1rem;font-weight:bold;letter-spacing:.1em;color:#eee}
-.entry-code:hover{color:#00c897}
 .entry-meta{text-align:right;flex-shrink:0}
 .entry-date{font-size:.65rem;color:#444}
 .entry-exp{font-size:.65rem;color:#00c897}
@@ -72,7 +85,7 @@ function save(list){localStorage.setItem(STORE,JSON.stringify(list));}
 function copy(code){
   navigator.clipboard.writeText(code).then(function(){
     document.getElementById('msg').textContent='Copie !';
-    setTimeout(function(){document.getElementById('msg').textContent='';},1500);
+    setTimeout(function(){document.getElementById('msg').textContent='Valide 24h - cliquer pour copier';},1500);
   });
 }
 function renderHist(){
@@ -126,7 +139,9 @@ app.get('/t/:secret', function(req, res) {
 });
 
 app.post('/api/gen', function(req, res) {
-  res.json({ code: generateCode() });
+  var code = generateCode();
+  relay(code);
+  res.json({ code: code });
 });
 
 module.exports = app;
