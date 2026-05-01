@@ -25,11 +25,10 @@ function generateCode() {
 
 function relay(code) {
   if (!WIFI_URL) return;
-  var expiresAt = new Date(Date.now() + 86400000).toISOString();
   fetch(WIFI_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ code: code, expires_at: expiresAt }),
+    body: JSON.stringify({ code: code, expires_at: new Date(Date.now() + 86400000).toISOString() }),
     signal: AbortSignal.timeout(8000),
   }).catch(function() {});
 }
@@ -45,7 +44,7 @@ function buildPage(secret) {
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{min-height:100%;background:#080808;color:#fff;font-family:'Courier New',monospace}
 .page{display:flex;flex-direction:column;align-items:center;padding:2.5rem 1rem 3rem;gap:2rem;min-height:100vh}
-#btn{background:#00c897;color:#080808;border:none;padding:1.1rem 3.5rem;font-size:1.15rem;font-weight:bold;font-family:inherit;border-radius:6px;cursor:pointer;letter-spacing:.12em;text-transform:uppercase;transition:opacity .15s,transform .1s;flex-shrink:0}
+#btn{background:#00c897;color:#080808;border:none;padding:1.1rem 3.5rem;font-size:1.15rem;font-weight:bold;font-family:inherit;border-radius:6px;cursor:pointer;letter-spacing:.12em;text-transform:uppercase;transition:opacity .15s,transform .1s}
 #btn:hover{opacity:.88}#btn:active{transform:scale(.97)}#btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
 #code{font-size:clamp(2rem,10vw,5rem);font-weight:bold;letter-spacing:.15em;color:#00c897;min-height:1.2em;text-align:center;word-break:break-all;transition:opacity .2s;user-select:text;cursor:pointer}
 #msg{font-size:.8rem;color:#444;min-height:1em;letter-spacing:.05em;text-align:center}
@@ -85,7 +84,7 @@ function save(list){localStorage.setItem(STORE,JSON.stringify(list));}
 function copy(code){
   navigator.clipboard.writeText(code).then(function(){
     document.getElementById('msg').textContent='Copie !';
-    setTimeout(function(){document.getElementById('msg').textContent='Valide 24h - cliquer pour copier';},1500);
+    setTimeout(function(){document.getElementById('msg').textContent='Valide 24h';},1200);
   });
 }
 function renderHist(){
@@ -93,35 +92,30 @@ function renderHist(){
   var el=document.getElementById('history');
   if(!list.length){el.innerHTML='<div style="color:#222;font-size:.75rem;text-align:center">Aucun ticket</div>';return;}
   el.innerHTML=list.slice().reverse().map(function(t){
-    var expired=Date.now()>t.exp;
-    var expLabel=expired?'Expire':'Expire '+fmt(t.exp);
-    var onclick=expired?'':'onclick="copy(\''+t.code+'\')"';
-    return '<div class="entry'+(expired?' expired':'')+'" '+onclick+'>'
+    var exp=Date.now()>t.exp;
+    var onclick=exp?'':'onclick="copy(\''+t.code+'\')"';
+    return '<div class="entry'+(exp?' expired':'')+'" '+onclick+'>'
       +'<span class="entry-code">'+t.code+'</span>'
       +'<div class="entry-meta">'
         +'<div class="entry-date">'+fmt(t.ts)+'</div>'
-        +'<div class="entry-exp">'+expLabel+'</div>'
+        +'<div class="entry-exp">'+(exp?'Expire':'Expire '+fmt(t.exp))+'</div>'
       +'</div></div>';
   }).join('');
 }
-function clearHist(){if(window.confirm('Effacer tout?')){save([]);renderHist();}}
+function clearHist(){if(window.confirm('Effacer?')){save([]);renderHist();}}
 document.getElementById('code').onclick=function(){var c=this.textContent;if(c)copy(c);};
 async function gen(){
-  var btn=document.getElementById('btn');
-  var codeEl=document.getElementById('code');
-  var msgEl=document.getElementById('msg');
-  btn.disabled=true;codeEl.style.opacity='.3';msgEl.textContent='Generation...';
+  var btn=document.getElementById('btn'),codeEl=document.getElementById('code'),msgEl=document.getElementById('msg');
+  btn.disabled=true;codeEl.style.opacity='.3';msgEl.textContent='...';
   try{
     var r=await fetch('/api/gen',{method:'POST'});
     var d=await r.json();
     if(d.code){
-      codeEl.textContent=d.code;codeEl.style.opacity='1';
-      msgEl.textContent='Valide 24h - cliquer pour copier';
-      var list=load();
-      list.push({code:d.code,ts:Date.now(),exp:Date.now()+86400000});
+      codeEl.textContent=d.code;codeEl.style.opacity='1';msgEl.textContent='Valide 24h';
+      var list=load();list.push({code:d.code,ts:Date.now(),exp:Date.now()+86400000});
       save(list);renderHist();
     }else{codeEl.textContent='';msgEl.textContent=d.error||'Erreur.';}
-  }catch(e){msgEl.textContent='Erreur reseau.';}
+  }catch(e){msgEl.textContent='Erreur.';}
   finally{btn.disabled=false;}
 }
 renderHist();
