@@ -1,28 +1,25 @@
-# Ticket - Scraper ze.lan
+# Ticket Wi-Fi
 
-Script Node.js pour scraper le site http://ze.lan et extraire textes, images et liens.
+Page secrète de génération de tickets Wi-Fi. Déployée sur Vercel.
 
-## Installation
+## Variables denvironnement requises
 
-```bash
-pnpm install
+| Variable | Description |
+|---|---|
+| `TICKET_SECRET` | Token secret pour lURL de la page |
+| `WIFI_URL` | URL du système Wi-Fi qui génère les tickets |
+
+## URL daccès
+
+Une fois déployé sur Vercel, accédez à :
+
+```
+https://votre-app.vercel.app/t/VOTRE_TICKET_SECRET
 ```
 
-## Utilisation
+## Déploiement Vercel
 
-```bash
-# Par défaut (http://ze.lan, profondeur 3)
-npx tsx src/scraper.ts
-
-# Personnalisé
-npx tsx src/scraper.ts http://ze.lan 5 resultats.json
-```
-
-## Résultat
-
-Un fichier JSON contenant pour chaque page :
-- **title** : titre de la page
-- **texts** : tous les textes extraits
-- **images** : URLs et attributs alt des images
-- **links** : tous les liens internes avec leur texte
+1. Importer ce dépôt sur [vercel.com/new](https://vercel.com/new)
+2. Ajouter les variables denvironnement `TICKET_SECRET` et `WIFI_URL`
+3. Déployer
 
