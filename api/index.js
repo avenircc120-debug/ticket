@@ -79,12 +79,12 @@ function fmt(ts){var d=new Date(ts);return pad(d.getDate())+'/'+pad(d.getMonth()
 function load(){try{return JSON.parse(localStorage.getItem(STORE)||'[]');}catch(e){return[];}}
 function save(list){localStorage.setItem(STORE,JSON.stringify(list));}
 function makeUsername(){
-  var buf=new Uint8Array(10);
+  var buf=new Uint8Array(12);
   crypto.getRandomValues(buf);
   var letters='abcdefghjkmnpqrstuvwxyz';
-  var chars=[letters[buf[0]%letters.length],letters[buf[1]%letters.length],letters[buf[2]%letters.length],letters[buf[3]%letters.length]];
-  chars.splice(buf[4]%5,0,String(buf[5]%10));
-  return chars.join('');
+  var arr=[letters[buf[0]%letters.length],letters[buf[1]%letters.length],letters[buf[2]%letters.length],letters[buf[3]%letters.length],String(buf[4]%10)];
+  for(var i=arr.length-1;i>0;i--){var j=buf[6+i]%(i+1);var tmp=arr[i];arr[i]=arr[j];arr[j]=tmp;}
+  return arr.join('');
 }
 function makePassword(){
   var buf=new Uint8Array(4);
@@ -101,14 +101,13 @@ function fbCopy(t,label){
   var ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';
   document.body.appendChild(ta);ta.focus();ta.select();
   try{document.execCommand('copy');setMsg(label+' OK');}catch(e){setMsg('Copier manuellement');}
-  document.body.removeChild(ta);
-  setTimeout(function(){setMsg('Toucher un champ pour copier');},1500);
+  document.body.removeChild(ta);setTimeout(function(){setMsg('Toucher un champ pour copier');},1500);
 }
 function setMsg(t){document.getElementById('msg').textContent=t;}
 function sendToRouter(){
   setMsg('Envoi en cours...');
   fetch(LOGIN_URL,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'username='+encodeURIComponent(currentUser)+'&password='+encodeURIComponent(currentPass)})
-  .then(function(r){setMsg(r.ok?'Accepte par le routeur':'Reponse routeur : '+r.status);})
+  .then(function(r){setMsg(r.ok?'Accepte par le routeur':'Reponse : '+r.status);})
   .catch(function(e){setMsg('Erreur : '+e.message);});
 }
 function renderHist(){
