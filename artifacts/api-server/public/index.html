@@ -82,6 +82,25 @@
       background: #fff;
     }
 
+    input.invalid {
+      border-color: #d1242f !important;
+      box-shadow: 0 0 0 3px rgba(209,36,47,.1) !important;
+    }
+
+    input.valid {
+      border-color: #1f883d !important;
+      box-shadow: 0 0 0 3px rgba(31,136,61,.1) !important;
+    }
+
+    .field-error {
+      font-size: .75rem;
+      color: #d1242f;
+      margin-top: .3rem;
+      display: none;
+    }
+
+    .field-error.visible { display: block; }
+
     textarea { resize: vertical; min-height: 120px; }
 
     .hint {
@@ -163,6 +182,13 @@
 
     <form id="ticketForm">
       <div class="field">
+        <label for="username">Nom d'utilisateur <span style="color:#d1242f">*</span></label>
+        <input type="text" id="username" name="username" placeholder="ex: 5jean" maxlength="5" required autocomplete="off" />
+        <p class="hint">5 caractères : commence par un chiffre, suivi de 4 lettres (ex: <strong>3marc</strong>, <strong>7anna</strong>)</p>
+        <p class="field-error" id="usernameError">Format invalide — doit commencer par un chiffre puis 4 lettres uniquement.</p>
+      </div>
+
+      <div class="field">
         <label for="title">Titre <span style="color:#d1242f">*</span></label>
         <input type="text" id="title" name="title" placeholder="Décrivez le problème en quelques mots" required />
       </div>
@@ -196,9 +222,32 @@
   <script>
     const form = document.getElementById('ticketForm');
     const btn = document.getElementById('submitBtn');
-    const spinner = document.getElementById('spinner');
     const btnText = document.getElementById('btnText');
     const alertBox = document.getElementById('alertBox');
+    const usernameInput = document.getElementById('username');
+    const usernameError = document.getElementById('usernameError');
+
+    const USERNAME_REGEX = /^[0-9][a-zA-Z]{4}$/;
+
+    function validateUsername(value) {
+      return USERNAME_REGEX.test(value);
+    }
+
+    usernameInput.addEventListener('input', () => {
+      const val = usernameInput.value;
+      if (val.length === 0) {
+        usernameInput.classList.remove('valid', 'invalid');
+        usernameError.classList.remove('visible');
+      } else if (validateUsername(val)) {
+        usernameInput.classList.add('valid');
+        usernameInput.classList.remove('invalid');
+        usernameError.classList.remove('visible');
+      } else {
+        usernameInput.classList.add('invalid');
+        usernameInput.classList.remove('valid');
+        usernameError.classList.add('visible');
+      }
+    });
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -206,19 +255,28 @@
       alertBox.className = 'alert';
       alertBox.textContent = '';
 
-      btn.disabled = true;
-      btn.classList.add('loading');
-      btnText.textContent = 'Envoi en cours…';
-
+      const username = usernameInput.value.trim();
       const title = document.getElementById('title').value.trim();
       const body = document.getElementById('body').value.trim();
       const label = document.getElementById('label').value;
+
+      if (!validateUsername(username)) {
+        usernameInput.classList.add('invalid');
+        usernameInput.classList.remove('valid');
+        usernameError.classList.add('visible');
+        usernameInput.focus();
+        return;
+      }
+
+      btn.disabled = true;
+      btn.classList.add('loading');
+      btnText.textContent = 'Envoi en cours…';
 
       try {
         const res = await fetch('/api/github/issues', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, body, label }),
+          body: JSON.stringify({ title, body: `**Soumis par :** ${username}\n\n${body}`, label }),
         });
 
         const data = await res.json();
@@ -230,6 +288,7 @@
         alertBox.className = 'alert success';
         alertBox.innerHTML = `✅ Ticket <strong>#${data.id}</strong> créé avec succès ! <a href="${data.url}" target="_blank">Voir sur GitHub →</a>`;
         form.reset();
+        usernameInput.classList.remove('valid', 'invalid');
       } catch (err) {
         alertBox.className = 'alert error';
         alertBox.textContent = '❌ ' + (err.message || 'Échec de la connexion. Vérifiez votre token GitHub.');
