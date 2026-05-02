@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ticket</title>
+  <title>Ticket WiFi</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -16,7 +16,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 2rem;
+      gap: 1.6rem;
       padding: 2rem;
     }
 
@@ -28,96 +28,103 @@
       color: #94a3b8;
     }
 
-    /* ── Champ identifiant ── */
-    .input-wrap {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: .5rem;
-      width: 100%;
-      max-width: 320px;
-    }
+    .fields { display: flex; flex-direction: column; gap: 1rem; width: 100%; max-width: 320px; }
 
-    .input-wrap label {
-      font-size: .8rem;
+    .field-wrap { display: flex; flex-direction: column; align-items: center; gap: .4rem; }
+
+    .field-wrap label {
+      font-size: .75rem;
       letter-spacing: .1em;
       text-transform: uppercase;
       color: #64748b;
     }
 
-    #username {
+    .field-wrap input {
       width: 100%;
       text-align: center;
-      font-size: 2rem;
+      font-size: 1.9rem;
       font-weight: 700;
-      letter-spacing: .25em;
+      letter-spacing: .2em;
       text-transform: uppercase;
       background: #1e293b;
       border: 2px solid #334155;
       border-radius: 12px;
       color: #f8fafc;
-      padding: .75rem 1rem;
+      padding: .7rem 1rem;
       outline: none;
       transition: border-color .15s;
     }
 
-    #username:focus            { border-color: #3b82f6; }
-    #username.valid            { border-color: #22c55e; }
-    #username.invalid          { border-color: #f87171; }
+    .field-wrap input:focus   { border-color: #3b82f6; }
+    .field-wrap input.valid   { border-color: #22c55e; }
+    .field-wrap input.invalid { border-color: #f87171; }
 
-    #username-hint {
-      font-size: .75rem;
-      color: #64748b;
-      text-align: center;
-    }
+    .field-hint  { font-size: .72rem; color: #64748b; text-align: center; }
+    .field-error { font-size: .72rem; color: #f87171; text-align: center; display: none; }
 
-    #username-error {
-      font-size: .75rem;
-      color: #f87171;
-      display: none;
-      text-align: center;
-    }
-
-    /* ── Ticket affiché ── */
+    /* ── Ticket ── */
     #ticket-display {
-      display: flex;
+      display: none;
       flex-direction: column;
       align-items: center;
       gap: .6rem;
-      min-height: 120px;
-      justify-content: center;
+      background: #1e293b;
+      border: 2px solid #22c55e;
+      border-radius: 16px;
+      padding: 1.5rem 2rem;
+      width: 100%;
+      max-width: 320px;
+      text-align: center;
     }
+    #ticket-display.visible { display: flex; }
 
-    #ticket-label {
-      font-size: .8rem;
-      letter-spacing: .1em;
+    .t-lbl {
+      font-size: .72rem;
+      letter-spacing: .12em;
       text-transform: uppercase;
       color: #64748b;
-      display: none;
     }
 
-    #ticket-code {
-      font-size: 5rem;
+    #ticket-id {
+      font-size: 3.2rem;
       font-weight: 900;
-      letter-spacing: .12em;
+      letter-spacing: .15em;
       text-transform: uppercase;
       color: #f8fafc;
       line-height: 1;
-      display: none;
     }
 
-    #ticket-code.visible  { display: block; }
-    #ticket-label.visible { display: block; }
+    #ticket-pin {
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: .25em;
+      color: #94a3b8;
+    }
+
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: #334155;
+      margin: .25rem 0;
+    }
+
+    .wifi-section { display: none; flex-direction: column; align-items: center; gap: .3rem; width: 100%; }
+    .wifi-section.visible { display: flex; }
+
+    .wifi-lbl { font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; color: #64748b; }
+
+    #wifi-code {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: .12em;
+      color: #3b82f6;
+      word-break: break-all;
+    }
+
+    #wifi-loading { font-size: .8rem; color: #64748b; display: none; }
 
     /* ── Statut ── */
-    #status {
-      font-size: .8rem;
-      color: #22c55e;
-      min-height: 1.1rem;
-      letter-spacing: .04em;
-      text-align: center;
-    }
-
+    #status { font-size: .8rem; color: #22c55e; min-height: 1.1rem; text-align: center; }
     #status.error { color: #f87171; }
 
     /* ── Bouton ── */
@@ -126,132 +133,144 @@
       color: #fff;
       border: none;
       border-radius: 16px;
-      padding: 1.2rem 3.5rem;
-      font-size: 1.25rem;
+      padding: 1.1rem 3rem;
+      font-size: 1.2rem;
       font-weight: 700;
       letter-spacing: .08em;
       text-transform: uppercase;
       cursor: pointer;
-      transition: background .15s, transform .1s, box-shadow .15s;
+      transition: background .15s, transform .1s;
       box-shadow: 0 4px 24px rgba(59,130,246,.35);
+      width: 100%;
+      max-width: 320px;
     }
-
-    #generate-btn:hover   { background: #2563eb; box-shadow: 0 6px 32px rgba(59,130,246,.5); }
+    #generate-btn:hover   { background: #2563eb; }
     #generate-btn:active  { transform: scale(.97); }
     #generate-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
-
-    /* ── Historique ── */
-    #history {
-      display: flex;
-      flex-wrap: wrap;
-      gap: .5rem;
-      justify-content: center;
-      max-width: 360px;
-    }
-
-    .chip {
-      background: #1e293b;
-      color: #94a3b8;
-      border-radius: 8px;
-      padding: .28rem .7rem;
-      font-size: .78rem;
-      letter-spacing: .06em;
-      font-weight: 600;
-      text-transform: uppercase;
-    }
   </style>
 </head>
 <body>
 
-  <h1>Générateur de ticket</h1>
+  <h1>Ticket WiFi — ze.lan</h1>
 
-  <!-- Champ identifiant -->
-  <div class="input-wrap">
-    <label for="username">Votre identifiant</label>
-    <input id="username" type="text" maxlength="5"
-           placeholder="6WUIW" autocomplete="off" autocapitalize="characters" />
-    <p id="username-hint">1 chiffre au début + 4 lettres &nbsp;·&nbsp; ex : <strong>6WUIW</strong></p>
-    <p id="username-error">Format invalide — chiffre au début, puis 4 lettres uniquement.</p>
+  <div class="fields">
+    <div class="field-wrap">
+      <label for="username">Identifiant</label>
+      <input id="username" type="text" maxlength="5"
+             placeholder="5BJNX" autocomplete="off" autocapitalize="characters" />
+      <p class="field-hint">1 chiffre + 4 lettres &nbsp;·&nbsp; ex : <strong>5BJNX</strong></p>
+      <p class="field-error" id="err-username">Chiffre au début + 4 lettres uniquement.</p>
+    </div>
+
+    <div class="field-wrap">
+      <label for="pincode">Code 4 chiffres</label>
+      <input id="pincode" type="text" maxlength="4" inputmode="numeric"
+             placeholder="5235" autocomplete="off" />
+      <p class="field-hint">4 chiffres &nbsp;·&nbsp; ex : <strong>5235</strong></p>
+      <p class="field-error" id="err-pin">Doit contenir exactement 4 chiffres.</p>
+    </div>
   </div>
 
-  <!-- Ticket affiché après génération -->
   <div id="ticket-display">
-    <span id="ticket-label">Votre ticket</span>
-    <span id="ticket-code"></span>
+    <span class="t-lbl">Votre ticket</span>
+    <span id="ticket-id"></span>
+    <span id="ticket-pin"></span>
+
+    <div class="divider"></div>
+
+    <div class="wifi-section" id="wifi-section">
+      <span class="wifi-lbl">🔐 Code WiFi ze.lan</span>
+      <span id="wifi-code"></span>
+    </div>
+    <span id="wifi-loading">Récupération du code WiFi…</span>
   </div>
 
   <p id="status"></p>
 
   <button id="generate-btn" onclick="f()">GÉNÉRER TICKET</button>
 
-  <div id="history"></div>
-
   <script>
-    const API_URL      = 'https://ticket-tau-seven.vercel.app/api/github/issues';
-    const USERNAME_RE  = /^[0-9][a-zA-Z]{4}$/;
+    const API_ISSUES = 'https://ticket-tau-seven.vercel.app/api/github/issues';
+    const API_WIFI   = 'https://ticket-tau-seven.vercel.app/api/wifi/codes';
+    const ID_RE      = /^[0-9][a-zA-Z]{4}$/;
+    const PIN_RE     = /^[0-9]{4}$/;
 
-    const usernameEl   = document.getElementById('username');
-    const errorEl      = document.getElementById('username-error');
-    const codeEl       = document.getElementById('ticket-code');
-    const labelEl      = document.getElementById('ticket-label');
-    const statusEl     = document.getElementById('status');
-    const historyEl    = document.getElementById('history');
-    const btn          = document.getElementById('generate-btn');
+    const usernameEl  = document.getElementById('username');
+    const pincodeEl   = document.getElementById('pincode');
+    const errUsername = document.getElementById('err-username');
+    const errPin      = document.getElementById('err-pin');
+    const displayEl   = document.getElementById('ticket-display');
+    const ticketId    = document.getElementById('ticket-id');
+    const ticketPin   = document.getElementById('ticket-pin');
+    const wifiSection = document.getElementById('wifi-section');
+    const wifiCode    = document.getElementById('wifi-code');
+    const wifiLoading = document.getElementById('wifi-loading');
+    const statusEl    = document.getElementById('status');
+    const btn         = document.getElementById('generate-btn');
 
-    /* Validation en temps réel */
-    usernameEl.addEventListener('input', () => {
-      const v = usernameEl.value;
-      if (!v)                      { usernameEl.className = ''; errorEl.style.display = 'none'; }
-      else if (USERNAME_RE.test(v)){ usernameEl.className = 'valid'; errorEl.style.display = 'none'; }
-      else                         { usernameEl.className = 'invalid'; errorEl.style.display = 'block'; }
+    function validate(input, regex, errEl) {
+      const v = input.value;
+      if (!v) { input.className=''; errEl.style.display='none'; return false; }
+      if (regex.test(v)) { input.className='valid'; errEl.style.display='none'; return true; }
+      input.className='invalid'; errEl.style.display='block'; return false;
+    }
+
+    usernameEl.addEventListener('input', () => validate(usernameEl, ID_RE, errUsername));
+    pincodeEl.addEventListener('input', () => {
+      pincodeEl.value = pincodeEl.value.replace(/\D/g,'');
+      validate(pincodeEl, PIN_RE, errPin);
     });
 
-    function f() {
+    async function f() {
       const user = usernameEl.value.trim();
+      const pin  = pincodeEl.value.trim();
 
-      /* Valider l'identifiant avant d'appeler l'API */
-      if (!USERNAME_RE.test(user)) {
-        usernameEl.className = 'invalid';
-        errorEl.style.display = 'block';
-        usernameEl.focus();
-        return;
+      if (!validate(usernameEl, ID_RE, errUsername)) { usernameEl.focus(); return; }
+      if (!validate(pincodeEl,  PIN_RE, errPin))     { pincodeEl.focus();  return; }
+
+      ticketId.textContent  = user.toUpperCase();
+      ticketPin.textContent = pin;
+      displayEl.classList.add('visible');
+      wifiSection.classList.remove('visible');
+      wifiCode.textContent  = '';
+      wifiLoading.style.display = 'block';
+      statusEl.className    = '';
+      statusEl.textContent  = 'Enregistrement…';
+      btn.disabled          = true;
+
+      /* Appels en parallèle : ticket GitHub + code WiFi */
+      const [issueRes, wifiRes] = await Promise.allSettled([
+        fetch(API_ISSUES, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: 'Ticket ' + user.toUpperCase() + ' – ' + pin,
+            body:  '**Identifiant :** `' + user.toUpperCase() + '`\n**Code :** `' + pin + '`',
+            label: '',
+          }),
+        }).then(r => r.json()),
+
+        fetch(API_WIFI).then(r => r.json()),
+      ]);
+
+      wifiLoading.style.display = 'none';
+
+      if (issueRes.status === 'fulfilled' && issueRes.value.id) {
+        statusEl.textContent = '✅ Ticket #' + issueRes.value.id + ' enregistré';
+      } else {
+        statusEl.className = 'error';
+        statusEl.textContent = '❌ Erreur enregistrement ticket';
       }
 
-      /* Afficher immédiatement */
-      codeEl.textContent = user.toUpperCase();
-      codeEl.classList.add('visible');
-      labelEl.classList.add('visible');
-      statusEl.className = '';
-      statusEl.textContent = 'Enregistrement en cours…';
-      btn.disabled = true;
+      if (wifiRes.status === 'fulfilled' && wifiRes.value.code) {
+        wifiCode.textContent = wifiRes.value.code;
+        wifiSection.classList.add('visible');
+      } else {
+        wifiCode.textContent = wifiRes.value?.error || 'Aucun code disponible';
+        wifiSection.classList.add('visible');
+      }
 
-      /* Appel API en arrière-plan */
-      fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: 'Ticket ' + user.toUpperCase(),
-          body:  '**Identifiant :** `' + user.toUpperCase() + '`',
-          label: '',
-        }),
-      })
-      .then(r => r.json())
-      .then(data => {
-        if (data.id) {
-          statusEl.textContent = '✅ Ticket #' + data.id + ' enregistré sur GitHub';
-          const chip = document.createElement('span');
-          chip.className = 'chip';
-          chip.textContent = user.toUpperCase() + ' · #' + data.id;
-          historyEl.prepend(chip);
-        } else {
-          throw new Error(data.error || 'Erreur inconnue');
-        }
-      })
-      .catch(err => {
-        statusEl.className = 'error';
-        statusEl.textContent = '❌ ' + err.message;
-      })
-      .finally(() => { btn.disabled = false; });
+      btn.disabled = false;
     }
   </script>
 </body>
