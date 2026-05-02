@@ -16,30 +16,89 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 2.5rem;
+      gap: 2rem;
       padding: 2rem;
     }
 
     h1 {
-      font-size: 1.1rem;
+      font-size: 1rem;
       font-weight: 500;
       letter-spacing: .15em;
       text-transform: uppercase;
       color: #94a3b8;
     }
 
+    /* ── Champ identifiant ── */
+    .input-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: .5rem;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    .input-wrap label {
+      font-size: .8rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+
+    #username {
+      width: 100%;
+      text-align: center;
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: .25em;
+      text-transform: uppercase;
+      background: #1e293b;
+      border: 2px solid #334155;
+      border-radius: 12px;
+      color: #f8fafc;
+      padding: .75rem 1rem;
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    #username:focus            { border-color: #3b82f6; }
+    #username.valid            { border-color: #22c55e; }
+    #username.invalid          { border-color: #f87171; }
+
+    #username-hint {
+      font-size: .75rem;
+      color: #64748b;
+      text-align: center;
+    }
+
+    #username-error {
+      font-size: .75rem;
+      color: #f87171;
+      display: none;
+      text-align: center;
+    }
+
+    /* ── Ticket affiché ── */
     #ticket-display {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: .75rem;
-      min-height: 130px;
+      gap: .6rem;
+      min-height: 120px;
       justify-content: center;
     }
 
+    #ticket-label {
+      font-size: .8rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: #64748b;
+      display: none;
+    }
+
     #ticket-code {
-      font-size: 5.5rem;
-      font-weight: 800;
+      font-size: 5rem;
+      font-weight: 900;
       letter-spacing: .12em;
       text-transform: uppercase;
       color: #f8fafc;
@@ -47,60 +106,55 @@
       display: none;
     }
 
-    #ticket-code.visible { display: block; }
-
-    #ticket-label {
-      font-size: .85rem;
-      color: #64748b;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      display: none;
-    }
-
+    #ticket-code.visible  { display: block; }
     #ticket-label.visible { display: block; }
 
+    /* ── Statut ── */
     #status {
       font-size: .8rem;
       color: #22c55e;
-      min-height: 1.2rem;
+      min-height: 1.1rem;
       letter-spacing: .04em;
+      text-align: center;
     }
 
     #status.error { color: #f87171; }
 
+    /* ── Bouton ── */
     #generate-btn {
       background: #3b82f6;
       color: #fff;
       border: none;
       border-radius: 16px;
-      padding: 1.25rem 3.5rem;
-      font-size: 1.35rem;
+      padding: 1.2rem 3.5rem;
+      font-size: 1.25rem;
       font-weight: 700;
-      letter-spacing: .06em;
+      letter-spacing: .08em;
       text-transform: uppercase;
       cursor: pointer;
       transition: background .15s, transform .1s, box-shadow .15s;
       box-shadow: 0 4px 24px rgba(59,130,246,.35);
     }
 
-    #generate-btn:active { transform: scale(.97); }
-    #generate-btn:hover  { background: #2563eb; box-shadow: 0 6px 32px rgba(59,130,246,.5); }
-    #generate-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+    #generate-btn:hover   { background: #2563eb; box-shadow: 0 6px 32px rgba(59,130,246,.5); }
+    #generate-btn:active  { transform: scale(.97); }
+    #generate-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
 
+    /* ── Historique ── */
     #history {
       display: flex;
       flex-wrap: wrap;
       gap: .5rem;
       justify-content: center;
-      max-width: 380px;
+      max-width: 360px;
     }
 
-    .history-chip {
+    .chip {
       background: #1e293b;
       color: #94a3b8;
       border-radius: 8px;
-      padding: .3rem .75rem;
-      font-size: .8rem;
+      padding: .28rem .7rem;
+      font-size: .78rem;
       letter-spacing: .06em;
       font-weight: 600;
       text-transform: uppercase;
@@ -111,6 +165,16 @@
 
   <h1>Générateur de ticket</h1>
 
+  <!-- Champ identifiant -->
+  <div class="input-wrap">
+    <label for="username">Votre identifiant</label>
+    <input id="username" type="text" maxlength="5"
+           placeholder="6WUIW" autocomplete="off" autocapitalize="characters" />
+    <p id="username-hint">1 chiffre au début + 4 lettres &nbsp;·&nbsp; ex : <strong>6WUIW</strong></p>
+    <p id="username-error">Format invalide — chiffre au début, puis 4 lettres uniquement.</p>
+  </div>
+
+  <!-- Ticket affiché après génération -->
   <div id="ticket-display">
     <span id="ticket-label">Votre ticket</span>
     <span id="ticket-code"></span>
@@ -123,57 +187,71 @@
   <div id="history"></div>
 
   <script>
-    const API_URL = 'https://ticket-tau-seven.vercel.app/api/github/issues';
+    const API_URL      = 'https://ticket-tau-seven.vercel.app/api/github/issues';
+    const USERNAME_RE  = /^[0-9][a-zA-Z]{4}$/;
+
+    const usernameEl   = document.getElementById('username');
+    const errorEl      = document.getElementById('username-error');
+    const codeEl       = document.getElementById('ticket-code');
+    const labelEl      = document.getElementById('ticket-label');
+    const statusEl     = document.getElementById('status');
+    const historyEl    = document.getElementById('history');
+    const btn          = document.getElementById('generate-btn');
+
+    /* Validation en temps réel */
+    usernameEl.addEventListener('input', () => {
+      const v = usernameEl.value;
+      if (!v)                      { usernameEl.className = ''; errorEl.style.display = 'none'; }
+      else if (USERNAME_RE.test(v)){ usernameEl.className = 'valid'; errorEl.style.display = 'none'; }
+      else                         { usernameEl.className = 'invalid'; errorEl.style.display = 'block'; }
+    });
 
     function f() {
-      const digits  = '0123456789';
-      const letters = 'abcdefghijklmnopqrstuvwxyz';
-      const code =
-        digits[Math.floor(Math.random() * digits.length)] +
-        Array.from({ length: 4 }, () => letters[Math.floor(Math.random() * letters.length)]).join('');
+      const user = usernameEl.value.trim();
 
-      const btn = document.getElementById('generate-btn');
-      const codeEl = document.getElementById('ticket-code');
-      const labelEl = document.getElementById('ticket-label');
-      const statusEl = document.getElementById('status');
-      const historyEl = document.getElementById('history');
+      /* Valider l'identifiant avant d'appeler l'API */
+      if (!USERNAME_RE.test(user)) {
+        usernameEl.className = 'invalid';
+        errorEl.style.display = 'block';
+        usernameEl.focus();
+        return;
+      }
 
-      codeEl.textContent = code.toUpperCase();
+      /* Afficher immédiatement */
+      codeEl.textContent = user.toUpperCase();
       codeEl.classList.add('visible');
       labelEl.classList.add('visible');
       statusEl.className = '';
       statusEl.textContent = 'Enregistrement en cours…';
       btn.disabled = true;
 
+      /* Appel API en arrière-plan */
       fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: 'Ticket ' + code.toUpperCase(),
-          body: '**Code généré :** `' + code.toUpperCase() + '`',
+          title: 'Ticket ' + user.toUpperCase(),
+          body:  '**Identifiant :** `' + user.toUpperCase() + '`',
           label: '',
         }),
       })
       .then(r => r.json())
       .then(data => {
         if (data.id) {
-          statusEl.className = '';
-          statusEl.textContent = '✅ Ticket #' + data.id + ' enregistré';
+          statusEl.textContent = '✅ Ticket #' + data.id + ' enregistré sur GitHub';
           const chip = document.createElement('span');
-          chip.className = 'history-chip';
-          chip.textContent = code.toUpperCase();
+          chip.className = 'chip';
+          chip.textContent = user.toUpperCase() + ' · #' + data.id;
           historyEl.prepend(chip);
         } else {
-          throw new Error(data.error || 'Erreur');
+          throw new Error(data.error || 'Erreur inconnue');
         }
       })
       .catch(err => {
         statusEl.className = 'error';
         statusEl.textContent = '❌ ' + err.message;
       })
-      .finally(() => {
-        btn.disabled = false;
-      });
+      .finally(() => { btn.disabled = false; });
     }
   </script>
 </body>
